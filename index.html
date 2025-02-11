@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>DGEN Trader</title>
+  <style>
+    /* Instagram-inspired modern minimalist design */
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+      background-color: #fafafa;
+      color: #262626;
+      padding: 20px;
+    }
+    h1, h2, h3 {
+      margin: 0 0 10px;
+      font-weight: 500;
+    }
+    header {
+      background-color: #fff;
+      padding: 20px;
+      text-align: center;
+      border-bottom: 1px solid #efefef;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      margin-bottom: 20px;
+    }
+    /* Status Bar: displays Cash and Total Value at the top */
+    .status-bar {
+      background: linear-gradient(90deg, #fd267d, #ff6037);
+      color: #fff;
+      padding: 10px;
+      border-radius: 8px;
+      text-align: center;
+      font-size: 1.1rem;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+    }
+    nav {
+      background-color: #fff;
+      padding: 10px;
+      text-align: center;
+      border: 1px solid #efefef;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    nav button {
+      margin: 5px;
+      padding: 10px 15px;
+      background-color: #fff;
+      border: 1px solid #dbdbdb;
+      border-radius: 4px;
+      color: #262626;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    nav button:hover {
+      background-color: #fafafa;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    .container {
+      background-color: #fff;
+      padding: 20px;
+      border: 1px solid #efefef;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      margin-bottom: 20px;
+    }
+    .hidden { display: none; }
+    /* Layout: main content and right column (tweets and banner ads) */
+    #contentContainer { display: flex; gap: 20px; }
+    #mainContent { flex: 3; }
+    #tweetFeed {
+      flex: 1;
+      max-width: 300px;
+      background-color: #fff;
+      padding: 15px;
+      border: 1px solid #efefef;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    #tweetFeed h3 {
+      border-bottom: 1px solid #efefef;
+      padding-bottom: 10px;
+      margin-bottom: 15px;
+      font-size: 1.1rem;
+      text-align: center;
+    }
+    .tweet {
+      padding: 10px;
+      margin-bottom: 10px;
+      border: 1px solid #efefef;
+      border-radius: 4px;
+      background-color: #f8f8f8;
+      font-size: 0.9rem;
+      line-height: 1.3;
+    }
+    /* Banner Ads Section (separate from tweets) */
+    #bannerContainer {
+      background-color: #fff;
+      padding: 15px;
+      border: 1px solid #efefef;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      text-align: center;
+      margin-top: 20px;
+    }
+    .banner-ad {
+      width: 100%;
+      max-width: 150px;
+      height: 150px;
+      background-color: #efefef;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      display: inline-block;
+      margin: 5px;
+      padding: 10px;
+      font-size: 0.9rem;
+      color: #555;
+      vertical-align: top;
+    }
+    /* Table styling */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+    }
+    th, td {
+      border: 1px solid #efefef;
+      padding: 10px;
+      text-align: center;
+      font-size: 0.9rem;
+    }
+    th { background-color: #fafafa; }
+    /* Input styling */
+    input[type="number"],
+    input[type="text"] {
+      width: 60px;
+      padding: 5px;
+      font-size: 1rem;
+      border: 1px solid #dbdbdb;
+      border-radius: 4px;
+      text-align: center;
+    }
+    /* Notification styling */
+    .notification {
+      background-color: #e1f5fe;
+      border: 1px solid #81d4fa;
+      padding: 8px;
+      margin-bottom: 10px;
+      border-radius: 4px;
+      font-size: 0.9rem;
+    }
+    .buy-sell {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      justify-content: center;
+    }
+    .buy-sell button:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    .timer { font-size: 1.1rem; text-align: center; margin-top: 10px; }
+    /* Title Screen Styling */
+    #titleScreen { text-align: center; }
+    /* Responsive adjustments */
+    @media (max-width: 800px) {
+      #contentContainer { flex-direction: column; }
+      #tweetFeed, #bannerContainer { max-width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Title Screen -->
+  <div id="titleScreen" class="container">
+    <h1>DGEN Trader</h1>
+    <p>Welcome to the world of crypto trading – your starting balance is <strong>$10,000</strong>.<br>
+       Your goal is to either reach $1,000,000 or hit $0.</p>
+    <button id="startGameBtn">Start Game</button>
+  </div>
+
+  <!-- Main Game Container -->
+  <div id="gameContainer" class="hidden">
+    <header>
+      <h1>DGEN Trader</h1>
+      <div class="timer">Time Trading: <span id="tradingTimer">00:00</span></div>
+    </header>
+    <!-- Status Bar at the Top -->
+    <div class="status-bar">
+      Cash: $<span id="cashBalance">10000.00</span> &nbsp;|&nbsp; Total Value: $<span id="totalValue">10000.00</span>
+    </div>
+    <nav>
+      <button data-page="marketPage">Market</button>
+      <button data-page="portfolioPage">Portfolio</button>
+      <button data-page="leaderboardPage">Leaderboard</button>
+      <button id="newGameBtn">New Game</button>
+    </nav>
+
+    <div id="contentContainer">
+      <!-- Left Column: Main Content -->
+      <div id="mainContent">
+        <!-- Market Page -->
+        <div id="marketPage" class="container">
+          <h2>Market</h2>
+          <!-- Notification Area -->
+          <div id="notificationArea"></div>
+          <table>
+            <thead>
+              <tr>
+                <th>Token</th>
+                <th>Price ($)</th>
+                <th>Your Holding</th>
+                <th>Buy</th>
+                <th>Sell</th>
+              </tr>
+            </thead>
+            <tbody id="marketTableBody">
+              <!-- Token rows generated on game start -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Portfolio Page -->
+        <div id="portfolioPage" class="container hidden">
+          <h2>Portfolio</h2>
+          <div id="portfolioTableContainer"></div>
+          <p>Total Portfolio Value: $<span id="portfolioTotal">10000.00</span></p>
+        </div>
+
+        <!-- Leaderboard Page -->
+        <div id="leaderboardPage" class="container hidden">
+          <h2>Leaderboard</h2>
+          <div id="leaderboardTableContainer"></div>
+        </div>
+      </div>
+
+      <!-- Right Column: Tweet Feed and Separate Banner Ads -->
+      <div id="rightColumn">
+        <div id="tweetFeed">
+          <h3>Latest Tweets</h3>
+          <div id="tweetContainer">
+            <!-- Pre-filled sample tweets will appear here -->
+          </div>
+        </div>
+        <div id="bannerContainer">
+          <h3>Promotions</h3>
+          <div id="bannerAd1" class="banner-ad"></div>
+          <div id="bannerAd2" class="banner-ad"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Save Name Dialog -->
+    <div id="saveNameDialog" class="container hidden">
+      <h2 id="objectiveMessage">Objective Reached!</h2>
+      <p>Enter your 4-letter username to save your score:</p>
+      <input type="text" id="playerName" placeholder="XXXX" maxlength="4" />
+      <button id="saveNameBtn">Save</button>
+    </div>
+  </div>
+
+  <script>
+    /***********************
+     * Global Game State *
+     ***********************/
+    let tokens = [];
+    let cash = 10000;
+    // Use token.name as the unique key.
+    let portfolio = {}; // { token.name: quantity }
+    let tradeStats = {}; // { token.name: { quantity, avgCost, realizedProfit } }
+    // Remove inline input fields—now we will use prompt() for buy and sell confirmations.
+    // (We still maintain persistent values for potential future use, if desired.)
+    let marketBuyQuantities = {};    
+    let marketSellQuantities = {};   
+    let portfolioSellQuantities = {}; 
+    
+    let priceInterval, notificationInterval, timerInterval, bannerInterval;
+    let gameActive = true;
+    let startTime;
+    let objectiveAchieved = false;
+    
+    // Pre-filled leaderboard sample data (Top 10) in mm:ss format.
+    const leaderboardMillion = [
+      { username: "STAR", time: "30:00" },
+      { username: "LUCK", time: "31:00" },
+      { username: "GOLD", time: "32:00" },
+      { username: "RICH", time: "33:00" },
+      { username: "WAVE", time: "34:00" },
+      { username: "MOON", time: "35:00" },
+      { username: "LUNA", time: "36:00" },
+      { username: "MILL", time: "37:00" },
+      { username: "BIGG", time: "38:00" },
+      { username: "WINR", time: "39:00" }
+    ];
+    const leaderboardBroke = [
+      { username: "FAIL", time: "10:00" },
+      { username: "ZERO", time: "10:30" },
+      { username: "LOSS", time: "11:00" },
+      { username: "DROP", time: "11:30" },
+      { username: "DARK", time: "12:00" },
+      { username: "NUL0", time: "12:30" },
+      { username: "VOID", time: "13:00" },
+      { username: "FLAT", time: "13:30" },
+      { username: "BOOM", time: "14:00" },
+      { username: "BRNK", time: "14:30" }
+    ];
+    
+    // Pre-filled sample tweets.
+    let tweets = [
+      "DegenDolla is surging today!",
+      "WhaleWash makes a huge splash!",
+      "RugPullRocket just got rugged – caution!"
+    ];
+    
+    // Market events.
+    const marketEvents = [
+      { event: "CEO arrested!", effect: "drop" },
+      { event: "Exchange bankrupt!", effect: "drop" },
+      { event: "Hack shakes the market!", effect: "drop" },
+      { event: "Tech breakthrough!", effect: "boom" },
+      { event: "New regulation sparks hype!", effect: "boom" },
+      { event: "Massive investor buys in!", effect: "boom" }
+    ];
+    
+    /****************************
+     * Utility Functions *
+     ****************************/
+    function formatTime(seconds) {
+      const mins = String(Math.floor(seconds / 60)).padStart(2, '0');
+      const secs = String(seconds % 60).padStart(2, '0');
+      return `${mins}:${secs}`;
+    }
+    
+    function generateTokens() {
+      const funnyNames = [
+        "MoonBiscuit", "FomoFrog", "ShibeShilling", "RugPullRocket",
+        "DegenDolla", "BagholderBitcoin", "WhaleWash", "LamboLemon",
+        "PumpkinPump", "SatoshiSillies", "HodlHamster", "FUDFactory",
+        "MoonMuffin", "DogeDynamo", "CryptoCactus", "AltcoinAlpaca",
+        "FrenzyFudge", "LamboLagoon", "ShillShark", "WhimsyWhale",
+        "BTFDbiscuit", "YoloYen", "NoobNickel", "StonkStork",
+        "RocketRug", "DiamondDoge", "BuzzingBitcoin", "FlipFlopFiat",
+        "SillySatoshi", "TokenTornado", "GrumpyGwei", "MadMoon",
+        "PepePenny", "BubblyBlockchain", "FunkyFomo", "CrazyCrypto",
+        "NuttyNode", "ZanyZcash", "LoonyLitecoin", "WackyWaves",
+        "BizarreBit", "QuirkyQuark", "FreakyFork", "JollyJoule",
+        "EccentricEther", "HilariousHash", "OddOuroboros", "NutsNakamoto",
+        "MadMempool", "DizzyDAO"
+      ];
+      tokens = funnyNames.map(name => {
+        let price = +(Math.random() * 9.9 + 0.1).toFixed(2);
+        let key = name; // Use full token name as unique key.
+        tradeStats[key] = { quantity: 0, avgCost: 0, realizedProfit: 0 };
+        portfolio[key] = 0;
+        if (!marketBuyQuantities[key]) { marketBuyQuantities[key] = "1"; }
+        if (!marketSellQuantities[key]) { marketSellQuantities[key] = "1"; }
+        if (!portfolioSellQuantities[key]) { portfolioSellQuantities[key] = "1"; }
+        return { name, price, rugged: false };
+      });
+    }
+    
+    function renderMarket() {
+      const tbody = document.getElementById("marketTableBody");
+      tbody.innerHTML = "";
+      tokens.forEach((token, index) => {
+        const row = document.createElement("tr");
+        // Token Name
+        let cell = document.createElement("td");
+        cell.textContent = token.name;
+        row.appendChild(cell);
+        // Price
+        cell = document.createElement("td");
+        cell.id = `price-${index}`;
+        cell.textContent = token.price.toFixed(2);
+        row.appendChild(cell);
+        // Holding
+        cell = document.createElement("td");
+        cell.id = `holding-${index}`;
+        cell.textContent = portfolio[token.name].toFixed(2);
+        row.appendChild(cell);
+        // Buy Button (popup prompt)
+        cell = document.createElement("td");
+        cell.innerHTML = `<button onclick="buyToken(${index})" id="buyBtn-${index}">Buy</button>`;
+        row.appendChild(cell);
+        // Sell Button (popup prompt)
+        cell = document.createElement("td");
+        cell.innerHTML = `<button onclick="sellToken(${index})" id="sellBtn-${index}">Sell</button>`;
+        row.appendChild(cell);
+        tbody.appendChild(row);
+      });
+    }
+    
+    // Update token prices (skip tokens that are rugged)
+    function updatePrices() {
+      tokens.forEach((token, index) => {
+        if (!token.rugged) {
+          let changePercent = (Math.random() * 10 - 5) / 100;
+          token.price = Math.max(0.01, token.price * (1 + changePercent));
+        }
+        const priceCell = document.getElementById(`price-${index}`);
+        if (priceCell) { priceCell.textContent = token.price.toFixed(2); }
+      });
+      updateTotalValue();
+      if (!document.getElementById("portfolioPage").classList.contains("hidden")) {
+        updatePortfolioPage();
+      }
+    }
+    
+    // Trigger a market event. If drop, mark token as rugged.
+    function triggerNotification() {
+      const eventObj = marketEvents[Math.floor(Math.random() * marketEvents.length)];
+      const tokenIndex = Math.floor(Math.random() * tokens.length);
+      const token = tokens[tokenIndex];
+      let eventMessage = `${eventObj.event} on ${token.name}!`;
+      if (eventObj.effect === "drop") {
+        token.price = 0.00;
+        token.rugged = true;
+        eventMessage += " Price dropped to $0! (RUGGED)";
+      } else if (eventObj.effect === "boom") {
+        token.price = +(token.price * (Math.random() * 9 + 5)).toFixed(2);
+        eventMessage += " Price skyrockets!";
+      }
+      const priceCell = document.getElementById(`price-${tokenIndex}`);
+      if (priceCell) { priceCell.textContent = token.price.toFixed(2); }
+      if (token.rugged) {
+        document.getElementById(`buyBtn-${tokenIndex}`).disabled = true;
+        document.getElementById(`sellBtn-${tokenIndex}`).disabled = true;
+      }
+      const notificationArea = document.getElementById("notificationArea");
+      const notifDiv = document.createElement("div");
+      notifDiv.className = "notification";
+      notifDiv.textContent = eventMessage;
+      notificationArea.prepend(notifDiv);
+      setTimeout(() => { notifDiv.remove(); }, 5000);
+      updateTotalValue();
+      checkObjective();
+      addTweet(eventMessage);
+    }
+    
+    function addTweet(message) {
+      tweets.unshift(message);
+      if (tweets.length > 3) tweets = tweets.slice(0, 3);
+      updateTweetFeed();
+    }
+    
+    function updateTweetFeed() {
+      const tweetContainer = document.getElementById("tweetContainer");
+      tweetContainer.innerHTML = "";
+      tweets.forEach(tweetMsg => {
+        const tweetDiv = document.createElement("div");
+        tweetDiv.className = "tweet";
+        tweetDiv.textContent = tweetMsg;
+        tweetContainer.appendChild(tweetDiv);
+      });
+    }
+    
+    // Instead of inline quantity fields, use prompt() to ask for quantity.
+    function buyToken(index) {
+      if (!gameActive) return;
+      const token = tokens[index];
+      if (token.rugged) {
+        alert("This token has been rugged and is untradeable.");
+        return;
+      }
+      let qtyStr = prompt(`Enter quantity to BUY for ${token.name} at $${token.price.toFixed(2)} per token:`);
+      if (qtyStr === null) return; // User cancelled.
+      let qty = parseFloat(qtyStr);
+      if (isNaN(qty) || qty <= 0) {
+        alert("Invalid quantity entered.");
+        return;
+      }
+      const cost = token.price * qty;
+      if (cost > cash) {
+        alert("Not enough cash!");
+        return;
+      }
+      cash -= cost;
+      portfolio[token.name] += qty;
+      let stats = tradeStats[token.name];
+      let newQuantity = stats.quantity + qty;
+      let newAvg = (stats.avgCost * stats.quantity + token.price * qty) / newQuantity;
+      stats.quantity = newQuantity;
+      stats.avgCost = newAvg;
+      updateHoldings(index);
+      updateCashDisplay();
+      updateTotalValue();
+      checkObjective();
+    }
+    
+    function sellToken(index) {
+      if (!gameActive) return;
+      const token = tokens[index];
+      if (token.rugged) {
+        alert("This token has been rugged and is untradeable.");
+        return;
+      }
+      let qtyStr = prompt(`Enter quantity to SELL for ${token.name} at $${token.price.toFixed(2)} per token:`);
+      if (qtyStr === null) return; // User cancelled.
+      let qty = parseFloat(qtyStr);
+      if (isNaN(qty) || qty <= 0) {
+        alert("Invalid quantity entered.");
+        return;
+      }
+      if (portfolio[token.name] < qty) {
+        alert("Not enough tokens to sell!");
+        return;
+      }
+      let stats = tradeStats[token.name];
+      let profit = (token.price - stats.avgCost) * qty;
+      stats.realizedProfit += profit;
+      stats.quantity -= qty;
+      if (stats.quantity === 0) { stats.avgCost = 0; }
+      portfolio[token.name] -= qty;
+      cash += token.price * qty;
+      updateHoldings(index);
+      updateCashDisplay();
+      updateTotalValue();
+      checkObjective();
+    }
+    
+    // Update the holding cell for a token in the Market table.
+    function updateMarketHoldings(key) {
+      tokens.forEach((t, i) => { if (t.name === key) updateHoldings(i); });
+    }
+    
+    function updateHoldings(index) {
+      const token = tokens[index];
+      const holdingCell = document.getElementById(`holding-${index}`);
+      if (holdingCell) { holdingCell.textContent = portfolio[token.name].toFixed(2); }
+    }
+    
+    function updateCashDisplay() {
+      document.getElementById("cashBalance").textContent = cash.toFixed(2);
+    }
+    
+    function updateTotalValue() {
+      let total = cash;
+      tokens.forEach(token => { total += portfolio[token.name] * token.price; });
+      document.getElementById("totalValue").textContent = total.toFixed(2);
+      document.getElementById("portfolioTotal").textContent = total.toFixed(2);
+    }
+    
+    function checkObjective() {
+      let total = cash;
+      tokens.forEach(token => { total += portfolio[token.name] * token.price; });
+      if (total >= 1000000 || total <= 0) {
+        if (!objectiveAchieved) {
+          objectiveAchieved = true;
+          gameActive = false;
+          clearInterval(priceInterval);
+          clearInterval(notificationInterval);
+          clearInterval(timerInterval);
+          showSaveNameDialog(total);
+        }
+      }
+    }
+    
+    function showSaveNameDialog(total) {
+      const dialog = document.getElementById("saveNameDialog");
+      dialog.classList.remove("hidden");
+      const msg = total >= 1000000 ? "Congratulations! You reached $1,000,000!" : "Oops! You hit $0!";
+      document.getElementById("objectiveMessage").textContent = msg;
+    }
+    
+    function savePlayer() {
+      const username = document.getElementById("playerName").value.trim().toUpperCase();
+      if (username.length !== 4) {
+        alert("Please enter a 4-letter username (e.g., AB12).");
+        return;
+      }
+      const elapsedSec = Math.floor((Date.now() - startTime) / 1000);
+      const timeFormatted = formatTime(elapsedSec);
+      let total = cash;
+      tokens.forEach(token => { total += portfolio[token.name] * token.price; });
+      if (total >= 1000000) { leaderboardMillion.push({ username, time: timeFormatted }); }
+      else if (total <= 0) { leaderboardBroke.push({ username, time: timeFormatted }); }
+      leaderboardMillion.sort((a, b) => {
+        const aSec = parseInt(a.time.split(":")[0]) * 60 + parseInt(a.time.split(":")[1]);
+        const bSec = parseInt(b.time.split(":")[0]) * 60 + parseInt(b.time.split(":")[1]);
+        return aSec - bSec;
+      });
+      leaderboardBroke.sort((a, b) => {
+        const aSec = parseInt(a.time.split(":")[0]) * 60 + parseInt(a.time.split(":")[1]);
+        const bSec = parseInt(b.time.split(":")[0]) * 60 + parseInt(b.time.split(":")[1]);
+        return aSec - bSec;
+      });
+      document.getElementById("saveNameDialog").classList.add("hidden");
+      switchPage("leaderboardPage");
+      renderLeaderboard();
+    }
+    
+    /********************
+     * Portfolio Table *
+     ********************/
+    function renderPortfolioTable() {
+      const container = document.getElementById("portfolioTableContainer");
+      container.innerHTML = "";
+      const table = document.createElement("table");
+      const thead = document.createElement("thead");
+      // Extra header for Sell action
+      thead.innerHTML = `
+        <tr>
+          <th>Token</th>
+          <th>Quantity</th>
+          <th>Unrealized Profit ($)</th>
+          <th>Realized Profit ($)</th>
+          <th>Total Profit ($)</th>
+          <th>Balance ($)</th>
+          <th>Position (%)</th>
+          <th>Sell</th>
+        </tr>
+      `;
+      table.appendChild(thead);
+      const tbody = document.createElement("tbody");
+      let totalTokenValue = 0;
+      tokens.forEach(token => {
+        const qty = tradeStats[token.name].quantity;
+        if (qty > 0) { totalTokenValue += token.price * qty; }
+      });
+      tokens.forEach(token => {
+        const stats = tradeStats[token.name];
+        if (stats.quantity > 0) {
+          const row = document.createElement("tr");
+          let cell = document.createElement("td");
+          cell.textContent = token.name;
+          row.appendChild(cell);
+          cell = document.createElement("td");
+          cell.textContent = stats.quantity.toFixed(2);
+          row.appendChild(cell);
+          let unrealized = (token.price - stats.avgCost) * stats.quantity;
+          cell = document.createElement("td");
+          cell.textContent = unrealized.toFixed(2);
+          row.appendChild(cell);
+          cell = document.createElement("td");
+          cell.textContent = stats.realizedProfit.toFixed(2);
+          row.appendChild(cell);
+          let totalProfit = unrealized + stats.realizedProfit;
+          cell = document.createElement("td");
+          cell.textContent = totalProfit.toFixed(2);
+          row.appendChild(cell);
+          let balance = token.price * stats.quantity;
+          cell = document.createElement("td");
+          cell.textContent = balance.toFixed(2);
+          row.appendChild(cell);
+          cell = document.createElement("td");
+          let posPercent = totalTokenValue > 0 ? (balance / totalTokenValue * 100) : 0;
+          cell.textContent = posPercent.toFixed(2) + "%";
+          row.appendChild(cell);
+          // Sell Action Column: use prompt() for quantity confirmation
+          cell = document.createElement("td");
+          cell.innerHTML = `<button onclick="sellFromPortfolio('${token.name}')">Sell</button>`;
+          row.appendChild(cell);
+          tbody.appendChild(row);
+        }
+      });
+      table.appendChild(tbody);
+      container.appendChild(table);
+    }
+    
+    // Allows selling from the Portfolio page via prompt.
+    function sellFromPortfolio(key) {
+      let token = tokens.find(t => t.name === key);
+      if (!token) return;
+      if (token.rugged) {
+        alert("This token has been rugged and is untradeable.");
+        return;
+      }
+      let qtyStr = prompt(`Enter quantity to SELL for ${token.name} at $${token.price.toFixed(2)} per token:`);
+      if (qtyStr === null) return;
+      let qty = parseFloat(qtyStr);
+      if (isNaN(qty) || qty <= 0) {
+        alert("Invalid quantity.");
+        return;
+      }
+      if (portfolio[key] < qty) {
+        alert("Not enough tokens to sell!");
+        return;
+      }
+      let stats = tradeStats[key];
+      let profit = (token.price - stats.avgCost) * qty;
+      stats.realizedProfit += profit;
+      stats.quantity -= qty;
+      if (stats.quantity === 0) { stats.avgCost = 0; }
+      portfolio[key] -= qty;
+      cash += token.price * qty;
+      updateCashDisplay();
+      updateTotalValue();
+      updatePortfolioPage();
+      updateMarketHoldings(key);
+      checkObjective();
+    }
+    
+    function updatePortfolioPage() { renderPortfolioTable(); }
+    
+    /********************
+     * Leaderboard *
+     ********************/
+    function renderLeaderboard() {
+      const container = document.getElementById("leaderboardTableContainer");
+      container.innerHTML = "";
+      const table = document.createElement("table");
+      const thead = document.createElement("thead");
+      // Two columns: Fastest to $1M and Fastest to $0
+      thead.innerHTML = `
+        <tr>
+          <th>Fastest to $1M</th>
+          <th>Fastest to $0</th>
+        </tr>
+      `;
+      table.appendChild(thead);
+      const tbody = document.createElement("tbody");
+      const maxRows = Math.max(leaderboardMillion.length, leaderboardBroke.length);
+      for (let i = 0; i < maxRows; i++) {
+        const row = document.createElement("tr");
+        let cell1 = document.createElement("td");
+        let cell2 = document.createElement("td");
+        if (i < leaderboardMillion.length) {
+          cell1.textContent = `${i + 1}. ${leaderboardMillion[i].username} - ${leaderboardMillion[i].time}`;
+        } else { cell1.textContent = ""; }
+        if (i < leaderboardBroke.length) {
+          cell2.textContent = `${i + 1}. ${leaderboardBroke[i].username} - ${leaderboardBroke[i].time}`;
+        } else { cell2.textContent = ""; }
+        row.appendChild(cell1);
+        row.appendChild(cell2);
+        tbody.appendChild(row);
+      }
+      table.appendChild(tbody);
+      container.appendChild(table);
+    }
+    
+    /********************
+     * Timer Functionality *
+     ********************/
+    function updateTimer() {
+      const now = Date.now();
+      const diff = Math.floor((now - startTime) / 1000);
+      document.getElementById("tradingTimer").textContent = formatTime(diff);
+    }
+    
+    /********************
+     * Banner Ads Functionality *
+     ********************/
+    // Update the two separate banner ad sections with two random tokens.
+    function updateBannerAds() {
+      const bannerAd1 = document.getElementById("bannerAd1");
+      const bannerAd2 = document.getElementById("bannerAd2");
+      if (tokens.length === 0) return;
+      let indices = [];
+      while (indices.length < 2) {
+        let idx = Math.floor(Math.random() * tokens.length);
+        if (!indices.includes(idx)) { indices.push(idx); }
+      }
+      const token1 = tokens[indices[0]];
+      const token2 = tokens[indices[1]];
+      bannerAd1.textContent = `Promo: Check out ${token1.name} – Buy Now!`;
+      bannerAd2.textContent = `Promo: Discover ${token2.name} – Limited Offer!`;
+    }
+    
+    /********************
+     * Page Navigation *
+     ********************/
+    function switchPage(pageId) {
+      ["marketPage", "portfolioPage", "leaderboardPage"].forEach(id => {
+        document.getElementById(id).classList.add("hidden");
+      });
+      document.getElementById(pageId).classList.remove("hidden");
+      if (pageId === "portfolioPage") { updatePortfolioPage(); }
+      if (pageId === "leaderboardPage") { renderLeaderboard(); }
+    }
+    
+    // Reset game: clear game state (except leaderboard) and restart.
+    function resetGame() {
+      if (confirm("Are you sure you want to start a new game? Your progress will be lost.")) {
+        clearInterval(priceInterval);
+        clearInterval(notificationInterval);
+        clearInterval(timerInterval);
+        clearInterval(bannerInterval);
+        tokens = [];
+        cash = 10000;
+        portfolio = {};
+        tradeStats = {};
+        marketBuyQuantities = {};
+        marketSellQuantities = {};
+        portfolioSellQuantities = {};
+        gameActive = true;
+        objectiveAchieved = false;
+        document.getElementById("tradingTimer").textContent = "00:00";
+        document.getElementById("saveNameDialog").classList.add("hidden");
+        generateTokens();
+        renderMarket();
+        updateCashDisplay();
+        updateTotalValue();
+        startTime = Date.now();
+        priceInterval = setInterval(() => { if (gameActive) updatePrices(); }, 1000);
+        notificationInterval = setInterval(() => { if (gameActive) triggerNotification(); }, Math.floor(Math.random() * 20000) + 20000);
+        timerInterval = setInterval(updateTimer, 1000);
+        bannerInterval = setInterval(updateBannerAds, 120000);
+        updateBannerAds();
+        switchPage("marketPage");
+      }
+    }
+    
+    /********************
+     * Navigation Event Listeners *
+     ********************/
+    document.querySelectorAll("nav button[data-page]").forEach(btn => {
+      btn.addEventListener("click", (e) => { switchPage(e.target.getAttribute("data-page")); });
+    });
+    document.getElementById("newGameBtn").addEventListener("click", () => {
+      if (confirm("Start a new game? Your current progress will be lost.")) {
+        resetGame();
+      }
+    });
+    document.getElementById("startGameBtn").addEventListener("click", () => {
+      document.getElementById("titleScreen").classList.add("hidden");
+      document.getElementById("gameContainer").classList.remove("hidden");
+      generateTokens();
+      renderMarket();
+      startTime = Date.now();
+      document.getElementById("tradingTimer").textContent = "00:00";
+      priceInterval = setInterval(() => { if (gameActive) updatePrices(); }, 1000);
+      notificationInterval = setInterval(() => { if (gameActive) triggerNotification(); }, Math.floor(Math.random() * 20000) + 20000);
+      timerInterval = setInterval(updateTimer, 1000);
+      bannerInterval = setInterval(updateBannerAds, 120000);
+      updateBannerAds();
+      updateTweetFeed();  // Immediately display the pre-filled tweets
+    });
+    document.getElementById("saveNameBtn").addEventListener("click", savePlayer);
+  </script>
+</body>
+</html>
